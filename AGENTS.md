@@ -14,7 +14,7 @@ This file provides guidance to AI agents and WARP (warp.dev) when working with c
 
 Burpcord is a Burp Suite extension that integrates Discord Rich Presence functionality. It displays real-time Burp Suite activity on Discord profiles, including security testing status, scan results, tool usage, and advanced metrics via the Montoya API. The extension is built using Java 21 and the Burp Suite Montoya API.
 
-**Current Version:** 2.6.0
+**Current Version:** 2.7.1
 
 ## Build System
 
@@ -71,12 +71,10 @@ make clean
 
 - Discord IPC connection lifecycle using the DiscordIPC library
 - Periodic status updates via `ScheduledExecutorService`
-- Atomic counters for requests, responses, and vulnerabilities
+- `ActivityProvider` registry sorted by `getPriority()` (lower = higher priority)
+- Round-robin rotation across all active providers on each update tick
+- Edition-aware large-image tooltip via `BurpSuiteInfo` from `api.burpSuite().version()` (edition + version string)
 - Idempotent shutdown with `AtomicBoolean` guard and explicit presence clearing
-- Status rotation when multiple activities are active
-- Priority-based status determination
-- Montoya API integrations for proxy history, site map, scope, and Collaborator
-- WebSocket message tracking
 
 **BurpcordConfig** - Configuration persistence layer:
 
@@ -87,8 +85,8 @@ make clean
 
 **Event Handlers:**
 
-- `BurpcordProxyHandler` - Tracks proxy requests/responses and intercept status
-- `BurpcordScannerListener` - Monitors active/passive scans and vulnerability counts
+- `BurpcordProxyHandler` - Tracks proxy requests/responses (30s activity window)
+- `BurpcordScannerListener` - Monitors audit issues; active for 60s after last new issue
 - `BurpcordRepeaterListener` - Detects Repeater tool activity via `ToolSource`
 - `BurpcordIntruderListener` - Tracks Intruder attack requests via `HttpHandler`
 - `BurpcordWebSocketListener` - Monitors WebSocket messages via `WebSocketCreatedHandler`
@@ -114,19 +112,20 @@ make clean
 
 ### Status Priority Logic
 
-Status updates follow this priority order (highest to lowest):
+Providers implement `ActivityProvider` with `getPriority()` (lower = higher priority). Registration order in `BurpcordExtension`:
 
-1. **Intercepting** - Active when proxy traffic is being intercepted (clears after 5s inactivity)
-2. **Scanning** - Shows when scan activity occurred in last 60s OR vulnerabilities detected
-3. **Proxy** - Displays accurate request count from Montoya API
-4. **Repeater** - Shows when Repeater was used in last 60s
-5. **Intruder** - Shows when Intruder attack is active (last 60s)
-6. **Site Map** - Bounded unique URLs via Proxy; periodic full `requestResponses().size()` on a background thread for reconciliation
-7. **Scope** - Shows unique target count in scope
-8. **Collaborator** - Shows OOB interaction hits (Pro only)
-9. **WebSocket** - Shows message count when WebSocket activity detected
+1. **Proxy** (10) - Active when proxy traffic seen in last 30s
+2. **Scanner** (20) - Active when a new audit issue arrived in last 60s
+3. **Intruder** (30) - Active when Intruder used in last 60s
+4. **Repeater** (40) - Active when Repeater used in last 60s
+5. **WebSocket** (50) - Active when WebSocket messages in last 30s
+6. **Site Map** (60) - Bounded unique URLs via Proxy + periodic background reconciliation
+7. **Scope** (70) - Active when scope changes recorded
+8. **Collaborator** (80) - Pro only; polls interaction count
 
-When multiple statuses are active, they rotate on each update interval.
+When multiple providers are active, `DiscordRPCManager.updatePresence()` round-robins through them each update interval (default 30s).
+
+**Note:** The "Show Intercept" config toggle exists but no intercept `ActivityProvider` is registered yet.
 
 ## Dependencies
 
@@ -188,17 +187,17 @@ There is no automated test suite. Manual testing requires:
 
 **Adding a new status type:**
 
-1. Add tracking variables to `DiscordRPCManager` (use `Atomic*` types)
-2. Create or modify a listener/handler to update those variables
-3. Update `updateStatusFromStats()` to include the new status in priority logic
+1. Create a class implementing `ActivityProvider` and `BurpComponent`
+2. Implement `isActive()`, `updatePresence()`, and `getPriority()`
+3. Register in `BurpcordExtension.initializeComponents()`
 4. Add configuration toggle in `BurpcordConfig` if user-configurable
 5. Add checkbox to `BurpcordConfigurationForm`
 
 **Modifying status priority:**
-Edit the conditional logic order in `DiscordRPCManager.updateStatusFromStats()`
+Edit `getPriority()` on the relevant `ActivityProvider` implementation.
 
 **Changing update frequency:**
-Users configure this via Settings tab. Default is 5 seconds (`DEFAULT_UPDATE_INTERVAL`).
+Users configure this via Settings tab. Default is 30 seconds.
 
 **Debugging Discord IPC issues:**
 
@@ -212,14 +211,16 @@ Call `BurpcordSettingsTab.log("message")` from anywhere in the codebase.
 ## File Structure
 
 ```tree
-src/main/java/com/burpcord/
-├── BurpcordExtension.java      # Entry point, registers all handlers
-├── BurpcordConfig.java         # Configuration persistence
-├── DiscordRPCManager.java      # Core RPC logic and Montoya integrations
-├── BurpcordSettingsTab.java    # GUI tab with settings and log viewer
-├── BurpcordProxyHandler.java   # Proxy request/response tracking
-├── BurpcordScannerListener.java # Scanner activity monitoring
-├── BurpcordRepeaterListener.java # Repeater activity detection
-├── BurpcordIntruderListener.java # Intruder attack tracking
-└── BurpcordWebSocketListener.java # WebSocket message tracking
+src/main/java/tech/chron0/burpcord/
+├── core/BurpcordExtension.java       # Entry point, registers all handlers
+├── core/BurpSuiteInfo.java            # Burp edition/version snapshot
+├── config/BurpcordConfig.java       # Configuration persistence
+├── discord/DiscordRPCManager.java     # Core RPC logic and provider rotation
+├── discord/ActivityProvider.java    # Provider interface
+├── ui/BurpcordSettingsTab.java        # Settings UI and log viewer
+├── listeners/handlers/BurpcordProxyHandler.java
+├── listeners/BurpcordScannerListener.java
+├── listeners/BurpcordRepeaterListener.java
+├── listeners/BurpcordIntruderListener.java
+└── listeners/BurpcordWebSocketListener.java
 ```

@@ -11,6 +11,7 @@ import tech.chron0.burpcord.ui.BurpcordSettingsTab;
 
 import burp.api.montoya.BurpExtension;
 import burp.api.montoya.MontoyaApi;
+import burp.api.montoya.core.Version;
 import burp.api.montoya.core.Registration;
 import burp.api.montoya.extension.ExtensionUnloadingHandler;
 
@@ -56,8 +57,14 @@ public class BurpcordExtension implements BurpExtension, ExtensionUnloadingHandl
                 // Config
                 BurpcordConfig config = new BurpcordConfig(api.persistence().preferences());
 
+                Version version = api.burpSuite().version();
+                BurpSuiteInfo burpSuiteInfo = new BurpSuiteInfo(
+                                version.name(),
+                                version.toString(),
+                                version.edition());
+
                 // Core RPC Manager
-                rpcManager = new DiscordRPCManager(config);
+                rpcManager = new DiscordRPCManager(config, burpSuiteInfo);
 
                 // Initialize Components
                 initializeComponents(api, config, rpcManager);
@@ -83,6 +90,7 @@ public class BurpcordExtension implements BurpExtension, ExtensionUnloadingHandl
 
                 logBanner();
                 BurpcordSettingsTab.log("Burpcord v" + BurpcordConstants.VERSION + " loaded.");
+                BurpcordSettingsTab.log("Detected: " + burpSuiteInfo.fullVersionString());
 
                 logEnabledFeatures(config);
 

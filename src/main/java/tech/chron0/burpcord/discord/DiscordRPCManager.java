@@ -1,7 +1,7 @@
 package tech.chron0.burpcord.discord;
 
 import tech.chron0.burpcord.config.BurpcordConfig;
-import tech.chron0.burpcord.core.BurpcordConstants;
+import tech.chron0.burpcord.core.BurpSuiteInfo;
 import tech.chron0.burpcord.ui.BurpcordSettingsTab;
 
 import com.jagrosh.discordipc.IPCClient;
@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DiscordRPCManager {
 
     private final BurpcordConfig config;
+    private final BurpSuiteInfo burpSuiteInfo;
     private final List<ActivityProvider> providers = new ArrayList<>();
 
     // IPC Client
@@ -48,9 +49,11 @@ public class DiscordRPCManager {
     private ScheduledExecutorService scheduler;
     private final AtomicBoolean shutdownCalled = new AtomicBoolean(false);
     private final OffsetDateTime startTime;
+    private int rotationIndex = 0;
 
-    public DiscordRPCManager(BurpcordConfig config) {
+    public DiscordRPCManager(BurpcordConfig config, BurpSuiteInfo burpSuiteInfo) {
         this.config = config;
+        this.burpSuiteInfo = burpSuiteInfo;
         this.startTime = OffsetDateTime.now();
     }
 
@@ -220,6 +223,7 @@ public class DiscordRPCManager {
         if (!shutdownCalled.compareAndSet(false, true)) {
             return; // Already shut down
         }
+        rotationIndex = 0;
         if (scheduler != null) {
             scheduler.shutdownNow();
         }
@@ -271,22 +275,28 @@ public class DiscordRPCManager {
         }
 
         RichPresence.Builder builder = new RichPresence.Builder();
-        builder.setLargeImageWithTooltip("burp", "Burp Suite Professional");
+        builder.setLargeImageWithTooltip("burp", burpSuiteInfo.fullVersionString());
         builder.setStartTimestamp(startTime.toEpochSecond());
 
-        String state = config.getCustomState();
+        String state = manualState != null && !manualState.isEmpty() ? manualState : config.getCustomState();
         boolean providerFound = false;
 
+        List<ActivityProvider> activeProviders = new ArrayList<>();
         for (ActivityProvider provider : providers) {
             if (provider.isActive()) {
-                provider.updatePresence(builder);
-                providerFound = true;
-                break;
+                activeProviders.add(provider);
             }
         }
 
+        if (!activeProviders.isEmpty()) {
+            rotationIndex = Math.floorMod(rotationIndex, activeProviders.size());
+            activeProviders.get(rotationIndex).updatePresence(builder);
+            rotationIndex++;
+            providerFound = true;
+        }
+
         if (!providerFound) {
-            builder.setDetails("Burp Suite - " + BurpcordConstants.VERSION);
+            builder.setDetails(burpSuiteInfo.fullVersionString());
             builder.setState(state != null && !state.isEmpty() ? state : "Security Researching");
         }
 
@@ -303,6 +313,7 @@ public class DiscordRPCManager {
     public void reloadRPC() {
         shutdown();
         shutdownCalled.set(false); // Reset so next initialize() cycle can shut down
+        rotationIndex = 0;
         initialize();
     }
 }

@@ -1,0 +1,34 @@
+<p>
+  Burpcord integrates Discord Rich Presence into Burp Suite, broadcasting your real-time testing activity as a status on
+  your Discord profile. As you work across Proxy, Scanner, Repeater, Intruder, and WebSockets, Burpcord automatically
+  updates your presence with live metrics such as request counts, scan issue counts, and in-scope target totals. A
+  priority queue determines which activity takes precedence when multiple tools are active simultaneously, and presence
+  is explicitly cleared when Burp Suite is closed.
+</p>
+
+<h2>Features</h2>
+<ul>
+  <li>Tracks activity across Proxy, Scanner, Repeater, Intruder, and WebSockets, displaying live counts and status
+    directly on your Discord profile</li>
+  <li>Shows Scanner results with issue counts and severity (High/Medium), and Intruder attack progress with request
+    counts</li>
+  <li>Displays Site Map URL counts and in-scope target totals, updated periodically via a background reconciliation</li>
+  <li>Tracks Burp Collaborator out-of-band interactions in real time (Burp Suite Professional only)</li>
+  <li>Priority queue automatically rotates your Discord status to reflect the most relevant active tool</li>
+  <li>Configurable custom state text, update interval, and per-feature toggles to control exactly what is displayed</li>
+  <li>Automatic reconnection with exponential backoff; a Reload RPC button is available for manual recovery</li>
+  <li>Presence is cleared cleanly on exit, preventing stale activity appearing on your Discord profile after Burp Suite
+    closes</li>
+</ul>
+
+<h2>Usage</h2>
+<ol>
+  <li>After loading the extension, open the Burp Settings dialog and navigate to the "Burpcord" panel. The status
+    indicator at the top of the panel confirms whether the Discord connection is active.</li>
+  <li>Enter your Discord Application ID in the General section, or leave it at the default to use the official Burpcord
+    application. Set your preferred update interval and optional custom state text.</li>
+  <li>Use the feature toggles to enable or disable individual tracking modules: Intercept, Scan Status, Proxy History,
+    Repeater, Intruder, Site Map, Scope, Collaborator Hits, and WebSockets.</li>
+  <li>Use the Reload RPC button if the connection drops or Discord restarts. Check the Log tab or the extension output
+    tab for connection events and error details.</li>
+</ol>

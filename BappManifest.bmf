@@ -1,0 +1,13 @@
+Uuid: b4df2fbd9a9f47468994436e58aa6234
+ExtensionType: 1
+Name: Burpcord, Discord Rich Presence for Burp
+RepoName: burpcord
+ScreenVersion: 2.7.1
+SerialVersion: 4
+MinPlatformVersion: 28
+ProOnly: False
+Author: Jon Marien
+ShortDescription: Integrates Discord Rich Presence with Burp Suite, displaying real-time security testing stats on your Discord profile.
+EntryPoint: Burpcord-2.7.1.jar
+BuildCommand: ./gradlew clean build
+SupportedProducts: Pro, Community

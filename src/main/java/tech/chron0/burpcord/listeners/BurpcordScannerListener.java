@@ -22,8 +22,11 @@ import burp.api.montoya.MontoyaApi;
  */
 public class BurpcordScannerListener implements AuditIssueHandler, ActivityProvider, BurpComponent {
 
+    private static final long SCAN_ACTIVITY_TTL_MS = 60_000;
+
     private final BurpcordConfig config;
     private final AtomicInteger issueCount = new AtomicInteger(0);
+    private long lastScanActivityTime = 0;
 
     public BurpcordScannerListener(BurpcordConfig config) {
         this.config = config;
@@ -32,13 +35,15 @@ public class BurpcordScannerListener implements AuditIssueHandler, ActivityProvi
     @Override
     public void handleNewAuditIssue(AuditIssue auditIssue) {
         issueCount.incrementAndGet();
+        lastScanActivityTime = System.currentTimeMillis();
     }
 
     @Override
     public boolean isActive() {
-        // Efficient check: AtomicInteger read is instantaneous.
-        // Event-driven updates ensure no polling of Scan API is required.
-        return config.isShowScan() && issueCount.get() > 0;
+        if (!config.isShowScan()) {
+            return false;
+        }
+        return (System.currentTimeMillis() - lastScanActivityTime) < SCAN_ACTIVITY_TTL_MS;
     }
 
     @Override

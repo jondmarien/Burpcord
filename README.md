@@ -1,13 +1,11 @@
 # Burpcord - Discord Rich Presence for Burp Suite
 
 [![GitHub Package](https://img.shields.io/badge/GitHub-Packages-blue)](https://github.com/jondmarien/Burpcord/packages)
-[![Version](https://img.shields.io/badge/v2.6.0-blue.svg)](https://github.com/jondmarien/Burpcord/releases/tag/v2.6.0)
+[![Version](https://img.shields.io/badge/v2.7.1-blue.svg)](https://github.com/jondmarien/Burpcord/releases/tag/v2.7.1)
 [![Changelog](https://img.shields.io/badge/Changelog-View-purple)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-
-
-**Burpcord v2.6.0** is a Burp Suite extension that integrates Discord Rich Presence, displaying your real-time security testing activity on your Discord profile in real-time, built with a robust, modular architecture and resilient IPC connection handling. Whether you're intercepting traffic, running scans, fuzzing with Intruder, or testing in Repeater, Burpcord keeps your Discord status updated automatically. Features include customizable status toggles, configurable update intervals, custom state text, site map and scope tracking, Collaborator integration, and configuration plus live logging inside Burp’s **Settings** dialog. Built with the Montoya API and Java 21.
+**Burpcord v2.7.1** is a Burp Suite extension that integrates Discord Rich Presence, displaying your real-time security testing activity on your Discord profile in real-time, built with a robust, modular architecture and resilient IPC connection handling. Whether you're intercepting traffic, running scans, fuzzing with Intruder, or testing in Repeater, Burpcord keeps your Discord status updated automatically. Features include customizable status toggles, configurable update intervals, custom state text, site map and scope tracking, Collaborator integration, and configuration plus live logging inside Burp’s **Settings** dialog. Built with the Montoya API and Java 21.
 
 ## ✨ Look & Feel
 
@@ -54,7 +52,7 @@
 
 ## 🛠️ Installation
 
-1. **Download**: Get the latest `Burpcord-2.6.0.jar` from the [Releases](https://github.com/jondmarien/burpcord/releases) page.
+1. **Download**: Get the latest `Burpcord-2.7.1.jar` from the [Releases](https://github.com/jondmarien/burpcord/releases) page.
 2. **Load in Burp Suite**:
    - Go to **Extensions** → **Installed**.
    - Click **Add**.
@@ -93,7 +91,7 @@ Enable or disable specific tracking modules:
 - JDK 21+
 - Gradle 8.0+
 
-Burpcord v2.6.0 uses the **ShadowJar** plugin to bundle dependencies and prevent runtime conflicts with Burp Suite.
+Burpcord v2.7.1 uses the **ShadowJar** plugin to bundle dependencies and prevent runtime conflicts with Burp Suite.
 
 ```bash
 git clone https://github.com/jondmarien/burpcord.git
@@ -104,7 +102,7 @@ cd burpcord
 ```
 
 The compiled artifact will be located at:
-`build/libs/Burpcord-2.6.0.jar`
+`build/libs/Burpcord-2.7.1.jar`
 
 ## 🔧 Troubleshooting
 
